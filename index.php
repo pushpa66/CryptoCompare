@@ -9,26 +9,25 @@ $connectionOptions = array(
 $symbols = getSymbols();
 echo count($symbols)."<br/>";
 
-/*
+$data = getAllCoinSnapShots();
+echo count($data)."<br/>";
+
+$conn = sqlsrv_connect($serverName, $connectionOptions);
+if( $conn === false ) {
+    die( FormatErrors( sqlsrv_errors()));
+}
+insertDataToData($data, $conn);
+
+
 truncateTable("Symbol", $conn);
 insertDataToSymbol($symbols, $conn);
-*/
+
 
 // truncateTable("Data", $conn);
 
 // createTableSymbol($conn);
 // createTableData($conn);
 
-
-$data = getAllCoinSnapShots();
-echo count($data)."<br/>";
-
-//Establishes the connection
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if( $conn === false ) {
-    die( FormatErrors( sqlsrv_errors()));
-}
-insertDataToData($data, $conn);
 
 // sqlsrv_free_stmt($getResults);
 
@@ -115,7 +114,7 @@ function insertDataToSymbol($symbols, $conn){
 
 function truncateTable($tableName, $conn){
     $truncateTable = "TRUNCATE TABLE $tableName";
-    $getResults= sqlsrv_query($conn, $createTable);
+    $getResults= sqlsrv_query($conn, $truncateTable);
     if ($getResults == FALSE)
         die(FormatErrors(sqlsrv_errors()));
     else
@@ -209,7 +208,7 @@ function getAllCoinSnapShots(){
 
         $index ++;
 
-        // if ($index == 10){
+        // if ($index == 100){
         //     break;
         // }
     }
