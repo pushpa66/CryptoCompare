@@ -11,11 +11,11 @@ if( $conn === false ) {
     die( FormatErrors( sqlsrv_errors()));
 }
 
-truncateTable("Data", $conn);
-readData($conn);
+//truncateTable("Symbol", $conn);
+readSymbol($conn);
 
-function readData($conn){
-	$readData = "SELECT * FROM Data" ;
+function readSymbol($conn){
+	$readData = "SELECT * FROM Symbol" ;
 
 	$getResults= sqlsrv_query($conn, $readData);
 
@@ -24,7 +24,7 @@ function readData($conn){
 	else
 		echo "Success";
 		while( $row = sqlsrv_fetch_array( $getResults, SQLSRV_FETCH_ASSOC) ) {
-		    echo $row['ID'].", ".$row['FROMSYMBOL'].", ".$row['TOSYMBOL']."<br />";
+		    echo $row['ID'].", ".$row['Symbol'].", ".$row['Symbol']."<br />";
 		}
 
 	sqlsrv_free_stmt($getResults);
