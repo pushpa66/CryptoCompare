@@ -22,9 +22,9 @@ function readSymbol($conn){
 	if ($getResults == FALSE)
 		  die(FormatErrors(sqlsrv_errors()));
 	else
-		echo "Success";
+		echo "Success<br/>";
 		while( $row = sqlsrv_fetch_array( $getResults, SQLSRV_FETCH_ASSOC) ) {
-		    echo $row['ID'].", ".$row['Symbol'].", ".$row['Symbol']."<br />";
+		    echo $row['ID'].", ".$row['Symbol'].", ".$row['CoinName']."<br />";
 		}
 
 	sqlsrv_free_stmt($getResults);

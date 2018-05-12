@@ -11,7 +11,7 @@ if( $conn === false ) {
     die( FormatErrors( sqlsrv_errors()));
 }
 
-truncateTable("Data", $conn);
+//truncateTable("Data", $conn);
 readData($conn);
 
 function readData($conn){
@@ -22,9 +22,13 @@ function readData($conn){
 	if ($getResults == FALSE)
 		  die(FormatErrors(sqlsrv_errors()));
 	else
-		echo "Success";
+		echo "Success<br />";
 		while( $row = sqlsrv_fetch_array( $getResults, SQLSRV_FETCH_ASSOC) ) {
-		    echo $row['ID'].", ".$row['FROMSYMBOL'].", ".$row['TOSYMBOL']."<br />";
+            echo $row['ID'].", ".$row['DATE'].", ".$row['FROMSYMBOL'].", ".$row['TOSYMBOL'].", ".$row['PRICE'].", ".
+            $row['LASTUPDATE'].", ".$row['LASTVOLUME'].", ".$row['LASTVOLUMETO'].", ".$row['VOLUMEDAY'].", ".
+            $row['VOLUMEDAYTO'].", ".$row['VOLUME24HOUR'].", ".$row['VOLUME24HOURTO'].", ".$row['OPENDAY'].", ".
+            $row['HIGHDAY'].", ".$row['LOWDAY'].", ".$row['OPEN24HOUR'].", ".$row['HIGH24HOUR'].", ".
+            $row['LOW24HOUR']."<br />";
 		}
 
 	sqlsrv_free_stmt($getResults);

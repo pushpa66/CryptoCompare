@@ -9,7 +9,12 @@ $connectionOptions = array(
 $symbols = getSymbols();
 echo count($symbols)."<br/>";
 
+$t1 = time();
 $data = getAllCoinSnapShots();
+$t2 = time();
+$min = strval((int)(($t2 - $t1)/60));
+$sec = strval(($t2 - $t1)%60);
+echo "Execution time ".$min." minutes and ".$sec." seconds <br/>";
 echo count($data)."<br/>";
 
 $conn = sqlsrv_connect($serverName, $connectionOptions);
@@ -18,6 +23,10 @@ if( $conn === false ) {
 }
 insertDataToData($data, $conn);
 
+// dropTable("Symbol", $conn);
+// dropTable("Data", $conn);
+// createTableSymbol($conn);
+// createTableData($conn);
 
 truncateTable("Symbol", $conn);
 insertDataToSymbol($symbols, $conn);
@@ -25,13 +34,53 @@ insertDataToSymbol($symbols, $conn);
 
 // truncateTable("Data", $conn);
 
-// createTableSymbol($conn);
-// createTableData($conn);
+function getAllCoinSnapShots(){
+    $snapShots = array();
+    $symbols = getSymbols();
 
+    // var_dump($symbols);
+    $index = 0;
 
-// sqlsrv_free_stmt($getResults);
+    foreach ($symbols as $symbol){
+        $fsym = $symbol['Symbol'];
+        $result1 = array();
+        $result2 = array();
+        $result3 = array();
+        // var_dump($fsym);
+        if($fsym == "USD"){
+            $result1 = getCoinSnapShot($fsym, "ETH");
+            $result2 = getCoinSnapShot($fsym, "BTC");
+        } else if ($fsym == "ETH"){
+            $result1 = getCoinSnapShot($fsym, "USD");
+            $result2 = getCoinSnapShot($fsym, "BTC");
+        } else if ($fsym == "BTC"){
+            $result1 = getCoinSnapShot($fsym, "USD");
+            $result2 = getCoinSnapShot($fsym, "ETH");
+        } else {
+            $result1 = getCoinSnapShot($fsym, "USD");
+            $result2 = getCoinSnapShot($fsym, "ETH");
+            $result3 = getCoinSnapShot($fsym, "BTC");
+            // var_dump($result1);
+        }
 
+        if (!empty($result1)){
+            array_push($snapShots, $result1);
+        }
+        if (!empty($result2)){
+            array_push($snapShots, $result2);
+        }
+        if (!empty($result3)){
+            array_push($snapShots, $result3);
+        }
 
+        $index ++;
+
+        // if ($index == 10){
+        //     break;
+        // }
+    }
+    return $snapShots;
+}
 function insertDataToData($data, $conn){
 
     $count = count($data);
@@ -90,7 +139,7 @@ function insertDataToSymbol($symbols, $conn){
         for ($j = 0; $j < 1000; $j++){
             if(($i * 1000 + $j) != $count){
                 $sym = $symbols[$i * 1000 + $j]['Symbol'];
-                $name = $symbol[$i * 1000 + $j]['CoinName'];
+                $name = $symbols[$i * 1000 + $j]['CoinName'];
                 $string = $string."('$sym','$name'),";
             } else {
                 break;
@@ -112,6 +161,15 @@ function insertDataToSymbol($symbols, $conn){
     }
 }
 
+function dropTable($tableName, $conn){
+    $dropTable = "DROP TABLE $tableName";
+    $getResults= sqlsrv_query($conn, $dropTable);
+    if ($getResults == FALSE)
+        die(FormatErrors(sqlsrv_errors()));
+    else
+    	echo "Table $tableName is dropped successfully!<br/>";
+}
+
 function truncateTable($tableName, $conn){
     $truncateTable = "TRUNCATE TABLE $tableName";
     $getResults= sqlsrv_query($conn, $truncateTable);
@@ -125,8 +183,8 @@ function createTableData($conn){
     $createTable = "CREATE TABLE Data (
         ID int NOT NULL IDENTITY PRIMARY KEY,
         DATE varchar(20) NOT NULL,
-        FROMSYMBOL varchar(10) NOT NULL,
-        TOSYMBOL varchar(10) NOT NULL,
+        FROMSYMBOL varchar(30) NOT NULL,
+        TOSYMBOL varchar(30) NOT NULL,
         PRICE float,
         LASTUPDATE int,
         LASTVOLUME float,
@@ -148,15 +206,15 @@ function createTableData($conn){
     if ($getResults == FALSE)
         die(FormatErrors(sqlsrv_errors()));
     else
-    	echo "Success";
+    echo "Table Data is created successfully!<br/>";
 }
 
 function createTableSymbol($conn){
     //Select Query
     $createTable = "CREATE TABLE Symbol (
         ID int NOT NULL IDENTITY PRIMARY KEY,
-        Symbol varchar(10) NOT NULL,
-        CoinName varchar(20)
+        Symbol varchar(30) NOT NULL,
+        CoinName varchar(50)
     )" ;
 
     $getResults= sqlsrv_query($conn, $createTable);
@@ -164,55 +222,7 @@ function createTableSymbol($conn){
     if ($getResults == FALSE)
         die(FormatErrors(sqlsrv_errors()));
     else
-    	echo "Success";
-}
-
-function getAllCoinSnapShots(){
-    $snapShots = array();
-    $symbols = getSymbols();
-
-    // var_dump($symbols);
-    $index = 0;
-
-    foreach ($symbols as $symbol){
-        $fsym = $symbol['Symbol'];
-        $result1 = array();
-        $result2 = array();
-        $result3 = array();
-        // var_dump($fsym);
-        if($fsym == "USD"){
-            $result1 = getCoinSnapShot($fsym, "ETH");
-            $result2 = getCoinSnapShot($fsym, "BTC");
-        } else if ($fsym == "ETH"){
-            $result1 = getCoinSnapShot($fsym, "USD");
-            $result2 = getCoinSnapShot($fsym, "BTC");
-        } else if ($fsym == "BTC"){
-            $result1 = getCoinSnapShot($fsym, "USD");
-            $result2 = getCoinSnapShot($fsym, "ETH");
-        } else {
-            $result1 = getCoinSnapShot($fsym, "USD");
-            $result2 = getCoinSnapShot($fsym, "ETH");
-            $result3 = getCoinSnapShot($fsym, "BTC");
-            // var_dump($result1);
-        }
-
-        if (!empty($result1)){
-            array_push($snapShots, $result1);
-        }
-        if (!empty($result2)){
-            array_push($snapShots, $result2);
-        }
-        if (!empty($result3)){
-            array_push($snapShots, $result3);
-        }
-
-        $index ++;
-
-        // if ($index == 100){
-        //     break;
-        // }
-    }
-    return $snapShots;
+        echo "Table Symbol is created successfully!<br/>";
 }
 
 function getSymbols(){
@@ -245,11 +255,12 @@ function getSymbols(){
         $response = json_decode($response, true);
 
         foreach($response['Data'] as $symbol) {
-            $symbol = array("Symbol" => $symbol['Symbol'], "CoinName" => $symbol['CoinName']);
-            array_push($symbols, $symbol);
+            $sym = array("Symbol" => $symbol['Symbol'], "CoinName" => $symbol['CoinName']);
+            array_push($symbols, $sym);
         }
     }
 
+    // var_dump($symbols);
     return $symbols;
 }
 
