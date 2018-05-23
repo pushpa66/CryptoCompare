@@ -12,23 +12,24 @@ if( $conn === false ) {
 }
 
 //truncateTable("Data", $conn);
-readCount($conn);
+readData($conn);
 
-function readCount($conn){
-	$readData = "SELECT * FROM Data WHERE FromSymbol = 'BTC' and ToSymbol = 'USD'" ;
+function readData($conn){
+	$readData = "SELECT * FROM Data" ;
 
 	$getResults= sqlsrv_query($conn, $readData);
 
 	if ($getResults == FALSE)
 		  die(FormatErrors(sqlsrv_errors()));
-	else{
+	else
 		echo "Success<br />";
 		while( $row = sqlsrv_fetch_array( $getResults, SQLSRV_FETCH_ASSOC) ) {
-            echo $row['ID'].", ".$row['Date'].", ".$row['FromSymbol'].", ".$row['ToSymbol'].", ".$row['_Open'].", ".
-            $row['High'].", ".$row['Low'].", ".$row['_Close'].", ".$row['VolumeFrom'].", ".
-            $row['VolumeTo']."<br />";
-        }
-    }
+            echo $row['ID'].", ".$row['DATE'].", ".$row['FROMSYMBOL'].", ".$row['TOSYMBOL'].", ".$row['PRICE'].", ".
+            $row['LASTUPDATE'].", ".$row['LASTVOLUME'].", ".$row['LASTVOLUMETO'].", ".$row['VOLUMEDAY'].", ".
+            $row['VOLUMEDAYTO'].", ".$row['VOLUME24HOUR'].", ".$row['VOLUME24HOURTO'].", ".$row['OPENDAY'].", ".
+            $row['HIGHDAY'].", ".$row['LOWDAY'].", ".$row['OPEN24HOUR'].", ".$row['HIGH24HOUR'].", ".
+            $row['LOW24HOUR']."<br />";
+		}
 
 	sqlsrv_free_stmt($getResults);
 }

@@ -17,19 +17,16 @@ $sec = strval(($t2 - $t1)%60);
 echo "Execution time ".$min." minutes and ".$sec." seconds <br/>";
 echo count($data)."<br/>";
 
-// var_dump($data);
-
 $conn = sqlsrv_connect($serverName, $connectionOptions);
 if( $conn === false ) {
     die( FormatErrors( sqlsrv_errors()));
 }
+insertDataToData($data, $conn);
 
 // dropTable("Symbol", $conn);
 // dropTable("Data", $conn);
 // createTableSymbol($conn);
 // createTableData($conn);
-
-insertDataToData($data, $conn);
 
 truncateTable("Symbol", $conn);
 insertDataToSymbol($symbols, $conn);
@@ -51,18 +48,18 @@ function getAllCoinSnapShots(){
         $result3 = array();
         // var_dump($fsym);
         if($fsym == "USD"){
-            $result1 = getCoinData($fsym, "ETH");
-            $result2 = getCoinData($fsym, "BTC");
+            $result1 = getCoinSnapShot($fsym, "ETH");
+            $result2 = getCoinSnapShot($fsym, "BTC");
         } else if ($fsym == "ETH"){
-            $result1 = getCoinData($fsym, "USD");
-            $result2 = getCoinData($fsym, "BTC");
+            $result1 = getCoinSnapShot($fsym, "USD");
+            $result2 = getCoinSnapShot($fsym, "BTC");
         } else if ($fsym == "BTC"){
-            $result1 = getCoinData($fsym, "USD");
-            $result2 = getCoinData($fsym, "ETH");
+            $result1 = getCoinSnapShot($fsym, "USD");
+            $result2 = getCoinSnapShot($fsym, "ETH");
         } else {
-            $result1 = getCoinData($fsym, "USD");
-            $result2 = getCoinData($fsym, "ETH");
-            $result3 = getCoinData($fsym, "BTC");
+            $result1 = getCoinSnapShot($fsym, "USD");
+            $result2 = getCoinSnapShot($fsym, "ETH");
+            $result3 = getCoinSnapShot($fsym, "BTC");
             // var_dump($result1);
         }
 
@@ -92,29 +89,38 @@ function insertDataToData($data, $conn){
         for ($j = 0; $j < 1000; $j++){
             $index = $i * 1000 + $j;
             if($index != $count){
-                $date = $data[$index]['Date'];
-                $fromSymbol = $data[$index]['FromSymbol'];
-                $toSymbol = $data[$index]['ToSymbol'];
-                $time = $data[$index]['Time'];
-                $open = $data[$index]['Open'];
-                $high = $data[$index]['High'];
-                $low = $data[$index]['Low'];
-                $close = $data[$index]['Close'];
-                $volumeFrom = $data[$index]['VolumeFrom'];
-                $volumeTo = $data[$index]['VolumeTo'];
+                $date = $data[$index]['DATE'];
+                $fromSymbol = $data[$index]['FROMSYMBOL'];
+                $toSymbol = $data[$index]['TOSYMBOL'];
+                $price = $data[$index]['PRICE'];
+                $lastUpdate = $data[$index]["LASTUPDATE"];
+                $lastVolume = $data[$index]["LASTVOLUME"];
+                $lastVolumeTo = $data[$index]["LASTVOLUMETO"];
+                $volumeDay = $data[$index]["VOLUMEDAY"];
+                $volumeDayTo = $data[$index]["VOLUMEDAYTO"];
+                $volume24Hour = $data[$index]["VOLUME24HOUR"];
+                $volume24HourTo = $data[$index]["VOLUME24HOURTO"];
+                $openDay = $data[$index]["OPENDAY"];
+                $highDay = $data[$index]["HIGHDAY"];
+                $lowDay = $data[$index]["LOWDAY"];
+                $open24Hour = $data[$index]["OPEN24HOUR"];
+                $high24Hour = $data[$index]["HIGH24HOUR"];
+                $low24Hour = $data[$index]["LOW24HOUR"];
 
-                $string =  $string."('$date','$fromSymbol','$toSymbol',$time, $open, $high, $low, $close, $volumeFrom, $volumeTo ),";
+                $string = $string."('$date','$fromSymbol','$toSymbol',$price, $lastUpdate, $lastVolume,";
+                $string = $string."$lastVolumeTo,$volumeDay, $volumeDayTo, $volume24Hour, $volume24HourTo,";
+                $string = $string."$openDay, $highDay, $lowDay, $open24Hour, $high24Hour, $low24Hour),";
             } else {
                 break;
             }   
         }
-
         $string = $string."+";
         $string = str_replace(",+", "", $string);
-        var_dump($string);
+        // var_dump($string);
     
         $insert = "INSERT INTO Data
-        (Date, FromSymbol, ToSymbol, Time, _Open, High, Low, _Close, VolumeFrom, VolumeTo)
+        (DATE, FROMSYMBOL, TOSYMBOL, PRICE, LASTUPDATE, LASTVOLUME, LASTVOLUMETO, VOLUMEDAY, VOLUMEDAYTO,
+        VOLUME24HOUR, VOLUME24HOURTO, OPENDAY, HIGHDAY, LOWDAY, OPEN24HOUR, HIGH24HOUR, LOW24HOUR)
         VALUES ".$string;
         // var_dump($insert);
         $getResults= sqlsrv_query($conn, $insert);
@@ -176,25 +182,31 @@ function truncateTable($tableName, $conn){
 function createTableData($conn){
     $createTable = "CREATE TABLE Data (
         ID int NOT NULL IDENTITY PRIMARY KEY,
-        Date varchar(20) NOT NULL,
-        FromSymbol varchar(30) NOT NULL,
-        ToSymbol varchar(30) NOT NULL,
-        Time float,
-        _Open float,
-        High float,
-        Low float,
-        _Close float,
-        VolumeFrom float,
-        VolumeTo float
-    )";
+        DATE varchar(20) NOT NULL,
+        FROMSYMBOL varchar(30) NOT NULL,
+        TOSYMBOL varchar(30) NOT NULL,
+        PRICE float,
+        LASTUPDATE int,
+        LASTVOLUME float,
+        LASTVOLUMETO float,
+        VOLUMEDAY float,
+        VOLUMEDAYTO float,
+        VOLUME24HOUR float,
+        VOLUME24HOURTO float,
+        OPENDAY float,
+        HIGHDAY float,
+        LOWDAY float,
+        OPEN24HOUR float,
+        HIGH24HOUR float,
+        LOW24HOUR float
+    )" ;
 
     $getResults= sqlsrv_query($conn, $createTable);
 
-    if ($getResults == FALSE){
-        echo "Error! <br/>";
+    if ($getResults == FALSE)
         die(FormatErrors(sqlsrv_errors()));
-    } else
-        echo "Table Data is created successfully!<br/>";
+    else
+    echo "Table Data is created successfully!<br/>";
 }
 
 function createTableSymbol($conn){
@@ -252,14 +264,13 @@ function getSymbols(){
     return $symbols;
 }
 
-function getCoinData($fsym, $tsym){
+function getCoinSnapShot($fsym, $tsym){
 
     $snapShot = array();
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-        CURLOPT_URL => "https://min-api.cryptocompare.com/data/histominute?fsym=$fsym&tsym=$tsym&limit=1",
-        // CURLOPT_URL => "https://www.cryptocompare.com/api/data/coinsnapshot/?fsym=$fsym&tsym=$tsym",
+        CURLOPT_URL => "https://www.cryptocompare.com/api/data/coinsnapshot/?fsym=$fsym&tsym=$tsym",
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => "",
         CURLOPT_MAXREDIRS => 10,
@@ -283,33 +294,47 @@ function getCoinData($fsym, $tsym){
         $response = json_decode($response, true);
 
 
-        if($response['Response'] == "Success"){
-            $data = $response['Data'][0];
+        if($response['Response'] !== "Error"){
+            $data = $response['Data']['AggregatedData'];
 
             $t=time();
             $date = date("Y-m-d",$t);
 
-            $fromSymbol = $fsym;
-            $toSymbol = $tsym;
-            $time = setData($data, 'time');
-            $open = setData($data, 'open');
-            $high = setData($data, 'high');
-            $low = setData($data, 'low');
-            $close = setData($data, 'close');
-            $volumeFrom = setData($data, 'volumefrom');
-            $volumeTo = setData($data, 'volumeto');
-          
+            $fromSymbol = setData($data,'FROMSYMBOL');
+            $toSymbol = setData($data,'TOSYMBOL');
+            $price = setData($data,'PRICE');
+            $lastUpdate = setData($data,"LASTUPDATE");
+            $lastVolume = setData($data,"LASTVOLUME");
+            $lastVolumeTo = setData($data,"LASTVOLUMETO");
+            $volumeDay = setData($data,"VOLUMEDAY");
+            $volumeDayTo = setData($data,"VOLUMEDAYTO");
+            $volume24Hour = setData($data,"VOLUME24HOUR");
+            $volume24HourTo = setData($data,"VOLUME24HOURTO");
+            $openDay = setData($data,"OPENDAY");
+            $highDay = setData($data,"HIGHDAY");
+            $lowDay = setData($data,"LOWDAY");
+            $open24Hour = setData($data,"OPEN24HOUR");
+            $high24Hour = setData($data,"HIGH24HOUR");
+            $low24Hour = setData($data,"LOW24HOUR");
+
             $snap = array(
-                'Date'=> $date,
-                'FromSymbol' => $fromSymbol,
-                'ToSymbol' => $toSymbol,
-                'Time' => $time,
-                'Open' => $open,
-                'High' => $high,
-                'Low' => $low,
-                'Close' => $close,
-                'VolumeFrom' => $volumeFrom,
-                'VolumeTo' => $volumeTo
+                'DATE'=> $date,
+                'FROMSYMBOL' => $fromSymbol,
+                'TOSYMBOL' => $toSymbol,
+                'PRICE' => $price,
+                'LASTUPDATE' => $lastUpdate,
+                'LASTVOLUME' => $lastVolume,
+                'LASTVOLUMETO' => $lastVolumeTo,
+                'VOLUMEDAY' => $volumeDay,
+                'VOLUMEDAYTO' => $volumeDayTo,
+                'VOLUME24HOUR' => $volume24Hour,
+                'VOLUME24HOURTO' => $volume24HourTo,
+                'OPENDAY' => $openDay,
+                'HIGHDAY' => $highDay,
+                'LOWDAY' => $lowDay,
+                'OPEN24HOUR' => $open24Hour,
+                'HIGH24HOUR' => $high24Hour,
+                'LOW24HOUR' => $low24Hour
             );
 
             $snapShot = $snap;
